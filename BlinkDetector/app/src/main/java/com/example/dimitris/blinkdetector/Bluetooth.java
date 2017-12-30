@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
@@ -26,7 +27,7 @@ public class Bluetooth {
 
     BluetoothAdapter mBluetoothAdapter;
 
-    void main(){
+    void main() {
 
         setBluetooth();
 
@@ -44,22 +45,22 @@ public class Bluetooth {
         }
 
         if (!mBluetoothAdapter.isEnabled()) {
-            Log.i(TAG,"Device hasn't Bluetooth enabled.");
+            Log.i(TAG, "Device hasn't Bluetooth enabled.");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 1);
         }
     }
 
     //Get the paired devices. Thus, user should connect with arduino before using the app
-    public BluetoothDevice getPairedBluetoothDevice(){
+    public BluetoothDevice getPairedBluetoothDevice() {
 
         BluetoothDevice mDevice = null;
 
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
-                Log.i(TAG,"Device name: " + device.getName()); //name of device
-                Log.i(TAG,"Device address:" + device.getAddress()); //MAC address
+                Log.i(TAG, "Device name: " + device.getName()); //name of device
+                Log.i(TAG, "Device address:" + device.getAddress()); //MAC address
 
                 mDevice = device;
             }
@@ -76,7 +77,7 @@ public class Bluetooth {
 
         private final String BLUETOOTH_UUID = "00001101-0000-1000-8000-00805f9b34fb";
 
-        private /*static */final UUID MY_UUID = UUID.fromString(BLUETOOTH_UUID);
+        private /*static */ final UUID MY_UUID = UUID.fromString(BLUETOOTH_UUID);
 
         public ConnectThread(BluetoothDevice device) {
 
@@ -85,7 +86,7 @@ public class Bluetooth {
             try {
                 tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
-                Log.e(TAG,"BluetoothSocket from UUID failed to be created.");
+                Log.e(TAG, "BluetoothSocket from UUID failed to be created.");
             }
             mSocket = tmp;
         }
@@ -96,10 +97,10 @@ public class Bluetooth {
                 mSocket.connect();
             } catch (IOException connectException) {
                 try {
-                    Log.e(TAG,"BluetoothSocket failed to connect.");
+                    Log.e(TAG, "BluetoothSocket failed to connect.");
                     mSocket.close();
                 } catch (IOException closeException) {
-                    Log.e(TAG,"BluetoothSocket failed to be closed.");
+                    Log.e(TAG, "BluetoothSocket failed to be closed.");
                 }
                 //Create thread to connect
                 mConnectedThread = new ConnectedThread(mSocket);
@@ -113,12 +114,20 @@ public class Bluetooth {
             try {
                 mSocket.close();
             } catch (IOException e) {
-                Log.e(TAG,"BluetoothSocket failed to be closed.");
+                Log.e(TAG, "BluetoothSocket failed to be closed.");
             }
         }
     }
 
     private class ConnectedThread extends Thread {
+
+//        public Handler mHandler;
+
+        public static final int SEND_CODE = 1;
+
+        public static final int RECEIVE_CODE = 2;
+
+        public static final int QUIT_CODE = 3;
 
         private final BluetoothSocket mSocket;
 
@@ -135,13 +144,14 @@ public class Bluetooth {
                 tmpIn = socket.getInputStream();
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
-                Log.e(TAG,"Failed to get socket's streams.  ");
+                Log.e(TAG, "Failed to get socket's streams.  ");
             }
             mInStream = tmpIn;
             mOutStream = tmpOut;
         }
 
         public void run() {
+
 
             byte[] buffer = new byte[1024];
             int begin = 0;
@@ -150,48 +160,60 @@ public class Bluetooth {
                 try {
 
                     bytes += mInStream.read(buffer, bytes, buffer.length - bytes);
-                    for(int i = begin; i < bytes; i++) {
-                        if(buffer[i] == "#".getBytes()[0]) {
-                            mHandler.obtainMessage(1, begin, i, buffer).sendToTarget();
+                    for (int i = begin; i < bytes; i++) {
+                        if (buffer[i] == "#".getBytes()[0]) {
+
+                            mHandler.obtainMessage(RECEIVE_CODE, begin, i, buffer).sendToTarget();
                             begin = i + 1;
-                            if(i == bytes - 1) {
+                            if (i == bytes - 1) {
                                 bytes = 0;
                                 begin = 0;
                             }
                         }
                     }
                 } catch (IOException e) {
-                    Log.e(TAG,"Error reading socket's InputStream.");
+                    Log.e(TAG, "Error reading socket's InputStream.");
                     break;
                 }
             }
         }
+
         public void write(byte[] bytes) {
             try {
                 mOutStream.write(bytes);
-            } catch (IOException e) { }
+            } catch (IOException e) {
+                Log.e(TAG, "Error writing to OutputStream.");
+            }
         }
+
         public void cancel() {
             try {
                 mSocket.close();
-            } catch (IOException e) { }
-        }
-    }
-
-    Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            //Handle passed arguments
-            byte[] writeBuf = (byte[]) msg.obj;
-            int begin = (int)msg.arg1;
-            int end = (int)msg.arg2;
-
-            switch(msg.what) {
-                case 1:
-                    String writeMessage = new String(writeBuf);
-                    writeMessage = writeMessage.substring(begin, end);
-                    break;
+            } catch (IOException e) {
             }
         }
-    };
+
+        public Handler mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                //Handle passed arguments
+                byte[] writeBuf = (byte[]) msg.obj;
+                int begin = (int) msg.arg1;
+                int end = (int) msg.arg2;
+
+                switch (msg.what) {
+                    case RECEIVE_CODE:
+                        String writeMessage = new String(writeBuf).substring(begin, end);
+                        Log.e(TAG, "Number sent: "+writeMessage);
+                        break;
+                    case SEND_CODE:
+                        break;
+                    case QUIT_CODE:
+                        break;
+//                        Looper.quitSafely();
+                }
+            }
+        };
+
     }
+}
