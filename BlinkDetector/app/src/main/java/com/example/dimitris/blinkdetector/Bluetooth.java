@@ -16,6 +16,8 @@ import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
+import static android.os.Looper.getMainLooper;
+
 
 public class Bluetooth {
 
@@ -29,25 +31,26 @@ public class Bluetooth {
 
     void main() {
 
-        setBluetooth();
+        initBluetoothAdapter();
 
         mConnectThread = new ConnectThread(getPairedBluetoothDevice());
         mConnectThread.start();
     }
 
 
-    public void setBluetooth() {
+    public void initBluetoothAdapter() {
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             Log.i(TAG, "Device doesn't support Bluetooth.");
-//            Toast.makeText(getApplicationContext(), "Your device doesn't support Bluetooth.", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getApplicationContext(), "Device doesn't support Bluetooth.", Toast.LENGTH_SHORT).show();
         }
 
         if (!mBluetoothAdapter.isEnabled()) {
             Log.i(TAG, "Device hasn't Bluetooth enabled.");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 1);
+//            Toast.makeText(getApplicationContext(), "Enabling Bluetooth!", Toast.LENGTH_LONG).show();
         }
     }
 
