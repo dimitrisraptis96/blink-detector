@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Blink Detector</string>
+    <string name="intro_message">
+            This application allows the communication between an android smartphone
+            and an arduino microcontroller through bluetooth and provides visualization
+            of a human\'s blinking.
+        </string>
+</resources>

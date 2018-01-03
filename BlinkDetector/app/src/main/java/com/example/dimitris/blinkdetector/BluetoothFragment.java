@@ -37,6 +37,11 @@ public class BluetoothFragment extends Fragment {
     private Button mStopButton;
 
     /**
+     * Name of the connected device
+     */
+    private String mConnectedDeviceName = null;
+
+    /**
      * Local Bluetooth adapter
      */
     private BluetoothAdapter mBluetoothAdapter = null;
