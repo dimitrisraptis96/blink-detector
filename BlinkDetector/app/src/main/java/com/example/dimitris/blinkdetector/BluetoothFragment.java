@@ -20,7 +20,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 
@@ -33,8 +33,7 @@ public class BluetoothFragment extends Fragment {
     private static final int REQUEST_ENABLE_BT = 2;
 
     // Layout Views
-    private Button mStartButton;
-    private Button mStopButton;
+    private ImageButton mImageButton;
 
     /**
      * Name of the connected device
@@ -54,6 +53,9 @@ public class BluetoothFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate()");
+        setHasOptionsMenu(true);
+
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -68,6 +70,7 @@ public class BluetoothFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart()");
         // If BT is not on, request that it be enabled.
         // setupChat() will then be called during onActivityResult
         if (!mBluetoothAdapter.isEnabled()) {
@@ -81,6 +84,7 @@ public class BluetoothFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy()");
         if (mService != null) {
             mService.stop();
         }
@@ -89,6 +93,7 @@ public class BluetoothFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume()");
 
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
@@ -114,29 +119,21 @@ public class BluetoothFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
 //        mConversationView = (ListView) view.findViewById(R.id.in);
 //        mOutEditText = (EditText) view.findViewById(R.id.edit_text_out);
-        mStartButton = (Button) view.findViewById(R.id.button_start);
-        mStopButton = (Button) view.findViewById(R.id.button_stop);
+        mImageButton = (ImageButton) view.findViewById(R.id.startImageButton);
     }
 
     /**
      * Set up the UI and background operations.
      */
     private void setup() {
-        Log.d(TAG, "setupChat()");
+        Log.d(TAG, "setup()");
 
         // Initialize the start button with a listener that for click events
-        mStartButton.setOnClickListener(new View.OnClickListener() {
+        mImageButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Start receiving from arduino
                 //sendMessage();
-            }
-        });
-
-        // Initialize the stop button with a listener that for click events
-        mStopButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Stop receiving from arduino
-                //sendMessage();
+//                mService.connect(device);
             }
         });
 
@@ -205,7 +202,6 @@ public class BluetoothFragment extends Fragment {
                     switch (msg.arg1) {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            mConversationArrayAdapter.clear();
                             break;
                         case BluetoothService.STATE_CONNECTING:
                             setStatus(R.string.title_connecting);
@@ -219,13 +215,12 @@ public class BluetoothFragment extends Fragment {
                     byte[] writeBuf = (byte[]) msg.obj;
                     // construct a string from the buffer
                     String writeMessage = new String(writeBuf);
-                    mConversationArrayAdapter.add("Me:  " + writeMessage);
                     break;
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
                     // construct a string from the valid bytes in the buffer
                     String readMessage = new String(readBuf, 0, msg.arg1);
-                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
+                    Toast.makeText(activity,readMessage,Toast.LENGTH_SHORT).show();
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
                     // save the connected device's name
@@ -268,24 +263,9 @@ public class BluetoothFragment extends Fragment {
         }
     }
 
-    /**
-     * Establish connection with other device
-     *
-     * @param data   An {@link Intent} with {@link DeviceListActivity#EXTRA_DEVICE_ADDRESS} extra.
-     */
-    private void connectDevice(Intent data, boolean secure) {
-        // Get the device MAC address
-        String address = data.getExtras()
-                .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-        // Get the BluetoothDevice object
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-        // Attempt to connect to the device
-        mService.connect(device);
-    }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.bluetooth_chat, menu);
+        inflater.inflate(R.menu.bluetooth, menu);
     }
 
     @Override
@@ -297,11 +277,11 @@ public class BluetoothFragment extends Fragment {
                 startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
                 return true;
             }
-            /*case R.id.discoverable: {
+            case R.id.discoverable: {
                 // Ensure this device is discoverable by others
-                ensureDiscoverable();
+//                ensureDiscoverable();
                 return true;
-            }*/
+            }
         }
         return false;
     }

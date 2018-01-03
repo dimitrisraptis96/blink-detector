@@ -1,22 +1,10 @@
 package com.example.dimitris.blinkdetector;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-import android.content.Intent;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Set;
-import java.util.UUID;
+import android.view.Menu;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +16,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
+            Log.e(TAG,"fragment creation");
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             BluetoothFragment fragment = new BluetoothFragment();
             transaction.replace(R.id.sample_content_fragment, fragment);
@@ -35,5 +24,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
 
 }
