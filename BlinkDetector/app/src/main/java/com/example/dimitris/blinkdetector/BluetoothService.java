@@ -24,7 +24,9 @@ public class BluetoothService {
 
     //Unique UUID for this application
     private static final UUID MY_UUID=
-            UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+            UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+
+//    "fa87c0d0-afac-11de-8a39-0800200c9a66"
 
     //Member fields
     private final BluetoothAdapter mAdapter;
@@ -93,6 +95,13 @@ public class BluetoothService {
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
+
+        // Send the name of the connected device back to the UI Activity
+        Message msg = mHandler.obtainMessage(Constants.MESSAGE_DEVICE_NAME);
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.DEVICE_NAME, device.getName());
+        msg.setData(bundle);
+        mHandler.sendMessage(msg);
 
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(device);

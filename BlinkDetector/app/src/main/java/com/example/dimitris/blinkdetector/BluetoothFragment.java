@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,6 +14,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -35,6 +37,8 @@ public class BluetoothFragment extends Fragment {
     // Layout Views
     private ImageButton mImageButton;
 
+    private boolean isButtonActive = false;
+
     /**
      * Name of the connected device
      */
@@ -44,6 +48,8 @@ public class BluetoothFragment extends Fragment {
      * Local Bluetooth adapter
      */
     private BluetoothAdapter mBluetoothAdapter = null;
+
+    private BluetoothDevice mDevice;
 
     /**
      * Member object for the chat services
@@ -131,6 +137,22 @@ public class BluetoothFragment extends Fragment {
         // Initialize the start button with a listener that for click events
         mImageButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+
+                if (!isButtonActive)
+                {
+                    mImageButton.setColorFilter(Color.GREEN);
+                    isButtonActive = true;
+                    Log.i(TAG, "Device Name: " + mConnectedDeviceName);
+                    mService.connect(mDevice);
+                    //Start procedure
+                }
+                else
+                {
+                    mImageButton.setColorFilter(Color.RED);
+                    isButtonActive = false;
+                    mService.stop();
+                    //Stop procedure
+                }
                 // Start receiving from arduino
                 //sendMessage();
 //                mService.connect(device);
@@ -151,9 +173,14 @@ public class BluetoothFragment extends Fragment {
         String address = data.getExtras()
                 .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
         // Get the BluetoothDevice object
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+//        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        if (mBluetoothAdapter.checkBluetoothAddress(address)){
+            Log.i(TAG,"Valid MAC address");
+        }
+        mDevice = mBluetoothAdapter.getRemoteDevice(address);
         // Attempt to connect to the device
-        mService.connect(device);
+//        mDevice = device;
+//        mService.connect(device);
     }
 
     /**
@@ -248,12 +275,19 @@ public class BluetoothFragment extends Fragment {
                 if (resultCode == Activity.RESULT_OK) {
                     connectDevice(data);
                 }
+                else{
+                    Log.d(TAG, "Device failed to connect");
+                    Toast.makeText(getActivity(), R.string.device_not_connected,
+                            Toast.LENGTH_SHORT).show();
+                }
+                break;
             case REQUEST_ENABLE_BT:
                 // When the request to enable Bluetooth returns
                 if (resultCode == Activity.RESULT_OK) {
                     // Bluetooth is now enabled, so set up a connection to arduino
                     setup();
-                } else {
+                }
+                else {
                     // User did not enable Bluetooth or an error occurred
                     Log.d(TAG, "BT not enabled");
                     Toast.makeText(getActivity(), R.string.bt_not_enabled_leaving,
