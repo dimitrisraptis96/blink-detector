@@ -22,7 +22,7 @@
             android:text="@string/start"
             android:textStyle="bold"
             android:fontFamily="sans-serif"
-            android:textColor="@color/blue"
+            android:textColor="@color/white"
             android:layout_gravity="center_vertical|left"
             android:textSize="24dp"/>
 
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:background="#00000000"
-            android:tint="@color/blue"
+            android:tint="@color/red"
             app:srcCompat= "@drawable/ic_start_eye" />
 
 
